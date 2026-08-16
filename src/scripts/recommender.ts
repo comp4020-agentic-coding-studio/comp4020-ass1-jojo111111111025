@@ -4,12 +4,12 @@
 // spec/recommender.test.ts.
 
 export const CATEGORIES = [
-  { id: "cooking", label: "Cooking" },
-  { id: "travel", label: "Travel" },
-  { id: "sports", label: "Sports" },
-  { id: "music", label: "Music" },
-  { id: "science", label: "Science" },
-  { id: "comedy", label: "Comedy" },
+  { id: "cooking", label: "🍳 Cooking" },
+  { id: "travel", label: "✈️ Travel" },
+  { id: "sports", label: "⚽ Sports" },
+  { id: "music", label: "🎵 Music" },
+  { id: "science", label: "🔬 Science" },
+  { id: "comedy", label: "😂 Comedy" },
 ] as const;
 
 export type CategoryId = (typeof CATEGORIES)[number]["id"];
@@ -19,8 +19,8 @@ export interface RecommenderState {
   weights: number[]; // one per CATEGORIES entry, sums to 1
 }
 
-const REINFORCE = 1;
-const DECAY = 0.85;
+const REINFORCE = 0.25;
+const DECAY = 0.95;
 
 export function createInitialState(): RecommenderState {
   const uniform = 1 / CATEGORIES.length;
