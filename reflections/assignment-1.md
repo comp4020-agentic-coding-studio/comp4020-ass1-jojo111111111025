@@ -1,25 +1,3 @@
-# Assignment 1 reflection
+**The breakthrough that moved the work forward** was realising that the first version of the recommendation mechanic was technically correct but pedagogically too fast. With `REINFORCE = 1` and `DECAY = 0.85`, repeatedly choosing Cooking pushed the feed from 2 Cooking cards at round 0 to 5, then 8, then a complete 9-card monopoly by round 3. The bubble was working, but it was collapsing before the visitor had time to experience the narrowing. Instead of choosing new constants by intuition, I ran a sensitivity analysis across 25 combinations of reinforcement and decay values. `REINFORCE = 0.25` and `DECAY = 0.95` produced a much more readable progression over ten rounds: 2 → 3 → 4 → 5 → 6 → 7 → 7 → 8 → 8 → 8 → 9. That made the mechanic itself carry the explanation: the visitor can actually watch other topics disappear rather than being shown the conclusion almost immediately.
 
-**The breakthrough that moved the work forward** was realising that "one idea,
-one mechanic" only holds together if the mechanic can be interrogated on its
-own — separately from the page it's rendered into. Writing
-`src/scripts/recommender.ts` as pure, DOM-free functions meant I could assert
-the actual claim of the prototype (repeated engagement narrows the feed,
-round after round, without anything being explicitly removed) as a real
-sequence of twenty-plus rounds, not a single before/after screenshot. That
-same separation is what let a structural test, a real DOM click-through test,
-and the build-time Astro render all share one `feed.ts` without drifting apart.
-The second breakthrough was smaller but more uncomfortable: this sandbox has
-no working GUI browser, and the honest response wasn't to eyeball the code
-and assume the click handler worked, but to write a test that actually fires
-`click()` at the real script in a real DOM and watch the feed narrow.
-
-**What this changed about the developer I want to be** is my tolerance for
-"it should work" as a stopping point. It would have been easy to treat a
-green `assignment-1.test.ts` — which only checks the hooks exist — as good
-enough, especially against a deadline and a broken browser tool. The gap
-between a page that *has* a reset button and a page where clicking it
-*actually resets the state* is exactly the gap a marker clicks through in the
-first ten seconds. I'd rather build the harder, more honest check than ship
-confidence I haven't earned, and I want that to be the default, not the thing
-I reach for only when the easy path is blocked.
+**What this changed about the developer I want to be** is my tolerance for “it works” as a stopping point. The original implementation passed its tests, but passing tests did not mean the interaction communicated the idea well. I learned to separate correctness from explanatory quality and to test the behaviour I actually want the visitor to experience. Rather than tweaking the numbers until they looked right, I compared multiple parameter settings and verified the final behaviour against the real implementation. I want that habit to become part of my default workflow: when an interactive system technically works but teaches the wrong thing, treat that as a design problem worth measuring, not as a reason to stop.

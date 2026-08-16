@@ -1,79 +1,15 @@
 # Process overview
 
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and each brief adds its own word count and moment count.
-
 ## What I built
 
-A filter bubble simulator: a feed of nine synthetic cards across six neutral
-categories, where clicking a card reinforces its category and decays the
-rest, and the next feed is redrawn from those updated weights. A round
-counter and a diversity readout ("Showing N of 6 topics") make the narrowing
-legible without the visitor doing the math, and a payoff line names exactly
-which topics have quietly dropped out once the feed has visibly narrowed. One
-idea, stated once in the copy and once in the mechanic: repeated engagement
-can narrow what a recommender shows you, even though nobody ever asked for
-the other topics to be removed.
+A filter bubble simulator: a feed of nine recommendation cards across six categories, where clicking a card reinforces its category and decays the others, and the next feed is redrawn from those updated weights. The visitor can see the round number and how many of the six topics remain visible. Repeatedly choosing one category gradually makes it dominate the feed, showing that a recommendation system can narrow what someone sees without the person explicitly asking other topics to disappear. The prototype stays focused on this one idea rather than explaining recommendation algorithms generally.
 
 ## The moments that mattered
 
-1. **Keeping the mechanic pure paid off immediately.** `chooseCategory`,
-   `diversity`, and `feedSlots` in `src/scripts/recommender.ts` take no DOM
-   and return new state rather than mutating — so the actual claim
-   ("repeatedly choosing one category drives its weight up and diversity down,
-   round after round") could be asserted directly as a monotonic sequence over
-   20+ rounds, not just spot-checked at one point in time. That test caught
-   what a single before/after snapshot wouldn't have: a poorly-tuned decay
-   constant would still pass a two-point check while plateauing or oscillating
-   over a longer run.
-   ([`6c1e5a4`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/commit/6c1e5a4))
+1. **I kept the mechanic focused instead of expanding the explanation.** I reduced the prototype to six content categories and nine recommendation slots. The visitor's action is simply choosing content they would click, and that choice changes the next recommendation distribution. I deliberately avoided adding explanations of machine learning, neural networks, social media history, or other causes of filter bubbles. This kept the interaction itself responsible for explaining the idea rather than adding a second layer of exposition. See commit [`6c1e5a4`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/commit/6c1e5a4).
 
-2. **Plain rounding would have silently broken the "always 9 cards"
-   invariant.** Turning six category weights into nine feed slots by naive
-   `Math.round` doesn't guarantee the results sum to 9 — rounding error can
-   leave you with 8 or 10. `feedSlots` instead floors every category's share,
-   then hands out the remaining slots to whichever categories had the largest
-   fractional remainder, so the slot count is exactly 9 by construction for
-   any weight distribution. `spec/recommender.test.ts` asserts the length
-   directly so a future change to the mechanic can't quietly reintroduce the
-   drift.
-   ([`6c1e5a4`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/commit/6c1e5a4))
+2. **The first working algorithm collapsed the bubble too quickly.** The initial values were `REINFORCE = 1` and `DECAY = 0.85`. Although the implementation passed its tests, simulating repeated Cooking choices showed the feed changing from 2 Cooking cards at round 0 to 5 at round 1, 8 at round 2, and 9 at round 3. This technically worked but did not communicate “gradually” narrowing very well. I treated this as a mechanic-tuning problem rather than a code failure.
 
-3. **This sandbox has no working GUI browser, so I didn't just take the
-   structural check on faith.** `agent-browser`'s bundled Chrome fails to
-   launch here (`libnspr4.so: cannot open shared object file`, and there's no
-   root to install it), which meant I couldn't open the page and click
-   through rounds myself the way `CLAUDE.md` asks. Rather than ship on the
-   strength of `spec/assignment-1.test.ts` alone — which only checks the
-   hooks exist, not that clicking them does anything — I wrote
-   `spec/interaction.test.ts`, which imports the real `src/scripts/main.ts`
-   and fires real `click()` events at a jsdom DOM built from `dist/index.html`.
-   It caught that the wiring actually works end to end: a single click
-   advances the round and re-renders exactly 9 cards; 15 clicks on one
-   category narrow the diversity readout below 6 and reveal the payoff line
-   with the right missing-topics text; reset restores round 0 and full
-   diversity. That's real coverage of the exact code that ships, not a
-   re-implementation of it — but it's a fallback for a missing browser, not a
-   substitute for one, and `CLAUDE.md` now says so for next time.
-   ([`2e86022`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/commit/2e86022)
-   through
-   [`6bc2d9d`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/commit/6bc2d9d))
+3. **I tested the tuning instead of guessing.** I ran a sensitivity analysis across 25 combinations of reinforcement and decay values, simulating ten consecutive Cooking choices for each. I selected `REINFORCE = 0.25` and `DECAY = 0.95` because the resulting progression was much more readable: Cooking cards increased approximately 2 → 3 → 4 → 5 → 6 → 7 → 7 → 8 → 8 → 8 → 9. The feed therefore narrows across the interaction instead of reaching a monopoly after three clicks. I applied only the two constant changes and verified the actual updated source with a fresh simulation. `pnpm check` passed with 37/37 tests and the build succeeded. The final tuning is recorded in commit [`9a62ffc`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/commit/9a62ffc).
 
-4. **The whole build had landed as one uncommitted pile before I checked
-   `git status`.** Five files' worth of the actual assignment (the mechanic,
-   the content, the page wiring, two spec files, and a `CLAUDE.md` update)
-   were sitting unstaged on top of the stack-conversion commit — exactly the
-   "single dump the night before" this repo's own `CLAUDE.md` calls the
-   weakest form of evidence. I split it into five commits along real seams
-   (mechanic → content → page wiring → verification test → harness) instead
-   of one `git add -A`, so the history at least shows the pieces the work is
-   actually made of, even though they land in one sitting rather than
-   spread across the week.
-   ([`6c1e5a4...6bc2d9d`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/compare/32b1a72...6bc2d9d))
-
-## Before you ship
-
-`pnpm check:evidence` verifies these citations resolve to real commits, that
-the current reflection entry is in `reflections/`, and that `CLAUDE.md` is
-there. It checks that the map is traceable, not that it's good.
+4. **I made the narrowing easier to read without adding another feature.** The nine cards represent recommendation slots rather than nine unique topics, so repeated categories are intentional. To make those repetitions immediately distinguishable, I added simple emoji to the existing six labels: 🍳 Cooking, ✈️ Travel, ⚽ Sports, 🎵 Music, 🔬 Science, and 😂 Comedy. The category IDs, interaction, and algorithm remained unchanged. This was a visual-legibility correction rather than an expansion of the prototype. The final checks remained green, with the tuning and label changes recorded in commit [`9a62ffc`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-jojo111111111025/commit/9a62ffc).
