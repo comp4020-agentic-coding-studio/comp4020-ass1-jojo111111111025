@@ -160,3 +160,34 @@ catching you out, a fact about the stack the agent keeps getting wrong --- write
 it down here. Growing this file is the work of harness engineering, and the gap
 between this boilerplate and your own version is part of what your prototype
 says about the developer you're becoming.
+
+## Assignment 1 project: filter bubble simulator
+
+One idea, one mechanic: **repeated engagement can gradually narrow what a
+recommendation system shows you, even though nobody explicitly asked for other
+topics to be removed.** Don't drift into explaining recommendation algorithms,
+machine learning, or filter bubbles generally --- that's explicitly out of
+scope per the brief. Everything on the page is in service of the one line
+above.
+
+- The mechanic lives in `src/scripts/recommender.ts` as pure, DOM-free
+  functions (`createInitialState`, `chooseCategory`, `diversity`,
+  `feedSlots`) so it's directly unit-testable in `spec/recommender.test.ts`,
+  independent of rendering.
+- Content (`src/scripts/cards.ts`, six neutral categories with generic card
+  titles) is synthetic --- this is a simulation of the pattern, not a claim
+  about how any real platform's algorithm works. Don't add real creators,
+  brands, or platform-specific claims.
+- `src/scripts/feed.ts` is the single source of truth for turning a
+  `RecommenderState` into rendered feed items, shared between the Astro
+  build-time initial render (`src/pages/index.astro`) and the client script
+  (`src/scripts/main.ts`) --- don't duplicate that logic in either place.
+- `spec/assignment-1.test.ts` checks the interactive hooks ship in the built
+  page (structural, jsdom without script execution); `spec/recommender.test.ts`
+  checks the actual narrowing behaviour in isolation. `spec/interaction.test.ts`
+  goes further: it imports the real `src/scripts/main.ts` and fires real
+  `click()` events at a jsdom DOM built from `dist/index.html`, so the actual
+  event wiring is exercised, not just its pieces. That's a fallback for a
+  sandbox with no working GUI browser, not a replacement for one --- if
+  `agent-browser` (or any real browser) is available, still open the page and
+  click through several rounds at both viewports before shipping.
