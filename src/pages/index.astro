@@ -1,19 +1,61 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { CATEGORIES, createInitialState } from "../scripts/recommender";
+import { buildFeed } from "../scripts/feed";
+
+const initialState = createInitialState();
+const initialFeed = buildFeed(initialState);
+const initialTopicCount = new Set(initialFeed.map((item) => item.categoryId)).size;
 ---
 
-<Layout title="COMP4020 prototype">
+<Layout title="Why does my feed only show me one thing? — a filter bubble simulator">
   <header>
     <nav aria-label="Primary">
       <a href="./">Home</a>
     </nav>
   </header>
   <main>
-    <h1>COMP4020 prototype</h1>
-    <p data-testid="intro">
-      Replace this with your prototype. This week's brief is on the course
-      website; <code>spec/README.md</code> explains how the checks in this repo
-      relate to it.
+    <h1>Why does my feed only show me one thing?</h1>
+    <p class="framing">
+      Below is a small, simplified simulation of a recommendation feed — not a
+      real platform's actual algorithm. Click whichever card you'd watch. The
+      feed adjusts to your choices, round after round.
+    </p>
+
+    <div class="status-row">
+      <p data-testid="round-counter">Round <span id="round-value">0</span></p>
+      <p data-testid="diversity-readout">
+        Showing <span id="diversity-value">{initialTopicCount}</span> of {CATEGORIES.length} topics
+      </p>
+    </div>
+
+    <div class="feed" data-testid="feed" id="feed">
+      {
+        initialFeed.map((item, i) => (
+          <button
+            type="button"
+            class="feed-card"
+            data-testid="feed-card"
+            data-category={item.categoryId}
+            data-slot={i}
+          >
+            <span class="feed-card-category">{item.label}</span>
+            <span class="feed-card-title">{item.title}</span>
+          </button>
+        ))
+      }
+    </div>
+
+    <p class="payoff" data-testid="payoff" id="payoff" hidden></p>
+
+    <button type="button" class="reset" data-testid="reset" id="reset">
+      Reset the experiment
+    </button>
+
+    <p class="takeaway">
+      The point: repeated engagement can gradually narrow what a
+      recommendation system shows you — even when nobody, including you, ever
+      asked for the other topics to go away.
     </p>
   </main>
   <script src="../scripts/main.ts"></script>
